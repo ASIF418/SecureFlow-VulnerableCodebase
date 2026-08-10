@@ -1,0 +1,13 @@
+name: SecureFlow DevSecOps Pipeline
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  hello-world:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Say Hello
+        run: echo "Hello World from the SecureFlow DevSecOps Pipeline!"
