@@ -1,0 +1,58 @@
+title = "SecureFlow Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+
+# ---------------------------------------------------------
+# SecureFlow Flask / application signing secrets
+# ---------------------------------------------------------
+
+[[rules]]
+id = "secureflow-flask-secret-key"
+description = "Detect hardcoded Flask SECRET_KEY"
+regex = '''(?i)(SECRET_KEY|SESSION_SECRET|JWT_SECRET)\s*[:=]\s*['"]?([A-Za-z0-9._@!#$%^&*+=/-]{6,})'''
+secretGroup = 2
+keywords = [
+  "SECRET_KEY",
+  "SESSION_SECRET",
+  "JWT_SECRET"
+]
+tags = ["secureflow", "flask", "secret"]
+
+
+# ---------------------------------------------------------
+# SecureFlow database credentials
+# ---------------------------------------------------------
+
+[[rules]]
+id = "secureflow-db-credential"
+description = "Detect hardcoded SecureFlow database passwords"
+regex = '''(?i)(DB_PASSWORD|POSTGRES_PASSWORD|AUTH_DB_PASSWORD|TRANSACTION_DB_PASSWORD)\s*[:=]\s*['"]?([A-Za-z0-9._@!#$%^&*+=/-]{6,})'''
+secretGroup = 2
+keywords = [
+  "DB_PASSWORD",
+  "POSTGRES_PASSWORD",
+  "AUTH_DB_PASSWORD",
+  "TRANSACTION_DB_PASSWORD"
+]
+tags = ["secureflow", "database", "password"]
+
+
+# ---------------------------------------------------------
+# Database connection strings containing credentials
+# ---------------------------------------------------------
+
+[[rules]]
+id = "secureflow-db-connection-string"
+description = "Detect database connection strings containing embedded credentials"
+regex = '''(?i)(postgres(?:ql)?|mysql|mongodb|redis)://[^:\s]+:([^@\s]+)@[^/\s]+'''
+secretGroup = 2
+keywords = [
+  "postgres://",
+  "postgresql://",
+  "mysql://",
+  "mongodb://",
+  "redis://"
+]
+tags = ["secureflow", "database", "connection-string"]
