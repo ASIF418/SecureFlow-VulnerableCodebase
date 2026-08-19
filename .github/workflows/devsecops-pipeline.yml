@@ -33,3 +33,56 @@ jobs:
       - name: Scan full Git history with Gitleaks
         run: |
           gitleaks git . --log-opts="--all" --redact --verbose
+  sonarqube-scan:
+    name: SonarQube Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Export SonarQube findings as JSON
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mkdir -p evidence
+
+          curl -s \
+            -H "Authorization: Bearer $SONAR_TOKEN" \
+            "https://sonarcloud.io/api/issues/search?componentKeys=ASIF418_SecureFlow-VulnerableCodebase&ps=500" \
+            > evidence/sonarqube-findings.json
+
+          jq '.' evidence/sonarqube-findings.json  
+      - name: Upload SonarQube findings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonarqube-findings
+          path: evidence/sonarqube-findings.json
+      - name: Enforce SonarQube severity gate
+        run: |
+          BLOCKING=$(jq '
+            [.issues[]
+             | select(
+                 .severity == "BLOCKER"
+                 or
+                 .severity == "HIGH"
+               )
+            ] | length
+          ' evidence/sonarqube-findings.json)
+
+          echo "BLOCKER/HIGH findings: $BLOCKING"
+
+          if [ "$BLOCKING" -gt 0 ]; then
+            echo "Security gate FAILED."
+            exit 1
+          fi
+
+          echo "No BLOCKER or HIGH findings."
+          echo "MEDIUM/LOW findings will be routed to AppSec."
