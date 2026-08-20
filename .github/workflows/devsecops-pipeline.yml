@@ -33,6 +33,7 @@ jobs:
       - name: Scan full Git history with Gitleaks
         run: |
           gitleaks git . --log-opts="--all" --redact --verbose
+
   sonarqube-scan:
     name: SonarQube Scan
     runs-on: ubuntu-latest
@@ -47,6 +48,7 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
       - name: Export SonarQube findings as JSON
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -58,32 +60,38 @@ jobs:
             "https://sonarcloud.io/api/issues/search?componentKeys=ASIF418_SecureFlow-VulnerableCodebase&ps=500" \
             > evidence/sonarqube-findings.json
 
-          jq '.' evidence/sonarqube-findings.json  
+          jq '.' evidence/sonarqube-findings.json
+
       - name: Upload SonarQube findings
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sonarqube-findings
           path: evidence/sonarqube-findings.json
+
       - name: Enforce SonarQube severity gate
         run: |
           BLOCKING=$(jq '
-            [.issues[]
-             | select(
-               (.status == "OPEN")
-               and
-               (
-                 .severity == "BLOCKER"
-                 or
-                 .severity == "CRITICAL"
-               )
+            [
+              .issues[]
+              | select(
+                  (.status == "OPEN")
+                  and
+                  (
+                    .severity == "BLOCKER"
+                    or
+                    .severity == "CRITICAL"
+                  )
+                )
             ] | length
           ' evidence/sonarqube-findings.json)
-          echo "OPEN BLOCKER/CRITICAL findings: $BLOCKING"
-       if [ "$BLOCKING" -gt 0 ]; then
-       echo "Security gate FAILED."
-       exit 1
-       fi
 
-       echo "No OPEN BLOCKER or CRITICAL findings."
-       echo "MAJOR/MINOR findings will be routed to AppSec."
+          echo "OPEN BLOCKER/CRITICAL findings: $BLOCKING"
+
+          if [ "$BLOCKING" -gt 0 ]; then
+            echo "Security gate FAILED."
+            exit 1
+          fi
+
+          echo "No OPEN BLOCKER or CRITICAL findings."
+          echo "MAJOR/MINOR findings will be routed to AppSec."
