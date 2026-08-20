@@ -70,19 +70,20 @@ jobs:
           BLOCKING=$(jq '
             [.issues[]
              | select(
+               (.status == "OPEN")
+               and
+               (
                  .severity == "BLOCKER"
                  or
-                 .severity == "HIGH"
+                 .severity == "CRITICAL"
                )
             ] | length
           ' evidence/sonarqube-findings.json)
+          echo "OPEN BLOCKER/CRITICAL findings: $BLOCKING"
+       if [ "$BLOCKING" -gt 0 ]; then
+       echo "Security gate FAILED."
+       exit 1
+       fi
 
-          echo "BLOCKER/HIGH findings: $BLOCKING"
-
-          if [ "$BLOCKING" -gt 0 ]; then
-            echo "Security gate FAILED."
-            exit 1
-          fi
-
-          echo "No BLOCKER or HIGH findings."
-          echo "MEDIUM/LOW findings will be routed to AppSec."
+       echo "No OPEN BLOCKER or CRITICAL findings."
+       echo "MAJOR/MINOR findings will be routed to AppSec."
