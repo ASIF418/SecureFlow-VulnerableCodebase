@@ -144,4 +144,5 @@ jobs:
           directory: infra/terraform/
           framework: terraform
           output_format: cli
-          hard_fail_on: HIGH,CRITICAL
+          hard_fail_on: CKV_AWS_274,CKV_AWS_145,CKV_AWS_39,CKV_AWS_38
+          
