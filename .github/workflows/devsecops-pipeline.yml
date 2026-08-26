@@ -130,3 +130,18 @@ jobs:
           format: table
           severity: CRITICAL,HIGH
           exit-code: 1
+  checkov-scan:
+    name: Checkov Terraform Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Checkov on Terraform
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: infra/terraform/
+          framework: terraform
+          output_format: cli
+          hard_fail_on: HIGH,CRITICAL
